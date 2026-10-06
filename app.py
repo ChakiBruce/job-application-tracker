@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from src.tracker import initialize_database
+from src.tracker import add_application, get_applications, initialize_database
 
 
 def read_required(prompt):
@@ -14,8 +14,8 @@ def read_required(prompt):
         print("Please enter a value.")
 
 
-def add_application(applications):
-    """Collect an application and store it for this session."""
+def add_application_flow():
+    """Collect an application and save it to SQLite."""
     company = read_required("Company: ")
     role = read_required("Role: ")
 
@@ -32,17 +32,13 @@ def add_application(applications):
             print("Please use a valid date in YYYY-MM-DD format.")
 
     status = input("Status (Enter for Applied): ").strip() or "Applied"
-    applications.append({
-        "company": company,
-        "role": role,
-        "application_date": application_date,
-        "status": status,
-    })
-    print("Application added for this session.")
+    add_application(company, role, application_date, status)
+    print("Application saved.")
 
 
-def view_applications(applications):
-    """Display the applications entered during this session."""
+def view_applications():
+    """Display applications saved in SQLite."""
+    applications = get_applications()
     if not applications:
         print("No applications yet. Choose 1 to add one.")
         return
@@ -55,17 +51,17 @@ def view_applications(applications):
 
 def main():
     initialize_database()
-    applications = []
+
     print("Job Application Tracker")
-    print("Entries are temporary and will be lost when you exit.")
+
 
     while True:
         print("\n1. Add application\n2. View applications\n3. Exit")
         choice = input("Choose an option: ").strip()
         if choice == "1":
-            add_application(applications)
+            add_application_flow()
         elif choice == "2":
-            view_applications(applications)
+            view_applications()
         elif choice == "3":
             print("Goodbye!")
             break
@@ -78,4 +74,5 @@ if __name__ == "__main__":
         main()
     except (EOFError, KeyboardInterrupt):
         print("\nGoodbye!")
+
 

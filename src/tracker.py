@@ -25,3 +25,25 @@ def initialize_database(database_path=DATABASE_PATH):
         """)
         connection.commit()
 
+
+def add_application(company, role, application_date, status, database_path=DATABASE_PATH):
+    """Save an application and return its database ID."""
+    with closing(sqlite3.connect(database_path)) as connection:
+        cursor = connection.execute(
+            """
+            INSERT INTO applications (company, role, application_date, status)
+            VALUES (?, ?, ?, ?)
+            """,
+            (company, role, application_date, status),
+        )
+        connection.commit()
+        return cursor.lastrowid
+
+
+def get_applications(database_path=DATABASE_PATH):
+    """Return saved applications in the order they were added."""
+    with closing(sqlite3.connect(database_path)) as connection:
+        connection.row_factory = sqlite3.Row
+        return connection.execute(
+            "SELECT id, company, role, application_date, status FROM applications ORDER BY id"
+        ).fetchall()
