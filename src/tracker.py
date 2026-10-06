@@ -47,3 +47,18 @@ def get_applications(database_path=DATABASE_PATH):
         return connection.execute(
             "SELECT id, company, role, application_date, status FROM applications ORDER BY id"
         ).fetchall()
+
+
+def update_application_status(application_id, status, database_path=DATABASE_PATH):
+    """Update one application's status; return False if its ID is missing."""
+    status = status.strip()
+    if not status:
+        raise ValueError("Status cannot be empty.")
+
+    with closing(sqlite3.connect(database_path)) as connection:
+        cursor = connection.execute(
+            "UPDATE applications SET status = ? WHERE id = ?",
+            (status, application_id),
+        )
+        connection.commit()
+        return cursor.rowcount == 1
