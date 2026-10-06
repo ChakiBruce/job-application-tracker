@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from src.tracker import add_application, get_applications, initialize_database, update_application_status
+from src.tracker import add_application, get_applications, initialize_database, search_applications, update_application_status
 
 
 def read_required(prompt):
@@ -43,6 +43,11 @@ def view_applications():
         print("No applications yet. Choose 1 to add one.")
         return
 
+    display_applications(applications)
+
+
+def display_applications(applications):
+    """Print rows returned by a database query."""
     for application in applications:
         print(f"\nID {application['id']}: {application['company']} - {application['role']}")
         print(f"   Date: {application['application_date']}")
@@ -76,6 +81,16 @@ def update_status_flow():
     else:
         print("No application found with that ID.")
 
+def search_applications_flow():
+    """Search company or role, with an optional exact status filter."""
+    keyword = input("Company or role contains (Enter for any): ").strip()
+    status = input("Status (Enter for any): ").strip()
+    applications = search_applications(keyword, status)
+    if not applications:
+        print("No matching applications found.")
+        return
+    display_applications(applications)
+
 def main():
     initialize_database()
 
@@ -83,7 +98,7 @@ def main():
 
 
     while True:
-        print("\n1. Add application\n2. View applications\n3. Exit\n4. Update application status")
+        print("\n1. Add application\n2. View applications\n3. Exit\n4. Update application status\n5. Search/filter applications")
         choice = input("Choose an option: ").strip()
         if choice == "1":
             add_application_flow()
@@ -94,8 +109,10 @@ def main():
             break
         elif choice == "4":
             update_status_flow()
+        elif choice == "5":
+            search_applications_flow()
         else:
-            print("Please choose 1, 2, 3, or 4.")
+            print("Please choose 1, 2, 3, 4, or 5.")
 
 
 if __name__ == "__main__":

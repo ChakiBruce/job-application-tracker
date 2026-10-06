@@ -62,3 +62,22 @@ def update_application_status(application_id, status, database_path=DATABASE_PAT
         )
         connection.commit()
         return cursor.rowcount == 1
+
+
+def search_applications(keyword="", status="", database_path=DATABASE_PATH):
+    """Find company/role text matches, optionally filtered by exact status."""
+    keyword = keyword.strip()
+    status = status.strip()
+    with closing(sqlite3.connect(database_path)) as connection:
+        connection.row_factory = sqlite3.Row
+        return connection.execute(
+            """
+            SELECT id, company, role, application_date, status
+            FROM applications
+            WHERE (instr(lower(company), lower(?)) > 0
+                   OR instr(lower(role), lower(?)) > 0)
+              AND (? = '' OR lower(trim(status)) = lower(?))
+            ORDER BY id
+            """,
+            (keyword, keyword, status, status),
+        ).fetchall()

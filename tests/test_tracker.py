@@ -85,5 +85,44 @@ class TrackerTests(unittest.TestCase):
         update.assert_not_called()
         self.assertIn("No application found", output.getvalue())
 
+    def test_search_matches_company_or_role_and_ignores_ascii_case(self):
+        first_id = tracker.add_application("Acme", "Engineer", "2026-10-06", "Applied", self.database)
+        second_id = tracker.add_application("Other", "Acme specialist", "2026-10-06", "Offer", self.database)
+        tracker.add_application("Unrelated", "Designer", "2026-10-06", "Applied", self.database)
+        rows = tracker.search_applications(" ACME ", database_path=self.database)
+        self.assertEqual([row["id"] for row in rows], [first_id, second_id])
+
+    def test_search_combines_keyword_and_exact_status(self):
+        tracker.add_application("Acme", "Engineer", "2026-10-06", "Applied", self.database)
+        wanted_id = tracker.add_application("Acme", "Engineer", "2026-10-06", "Interviewing", self.database)
+        tracker.add_application("Other", "Designer", "2026-10-06", "Interviewing", self.database)
+        rows = tracker.search_applications("acme", " interviewing ", self.database)
+        self.assertEqual([row["id"] for row in rows], [wanted_id])
+        self.assertEqual(tracker.search_applications("", "Interview", self.database), [])
+
+    def test_blank_search_returns_all_and_status_only_filters(self):
+        first_id = tracker.add_application("First", "Engineer", "2026-10-06", "Applied", self.database)
+        second_id = tracker.add_application("Second", "Engineer", "2026-10-06", "Offer", self.database)
+        self.assertEqual([row["id"] for row in tracker.search_applications(database_path=self.database)], [first_id, second_id])
+        self.assertEqual([row["id"] for row in tracker.search_applications(status="offer", database_path=self.database)], [second_id])
+
+    def test_search_treats_special_characters_as_literal_text(self):
+        wanted_id = tracker.add_application("O'Reilly 100%_", "Engineer", "2026-10-06", "Applied", self.database)
+        tracker.add_application("Other", "Engineer", "2026-10-06", "Applied", self.database)
+        for keyword in ("O'Reilly", "%_", "100%"):
+            self.assertEqual([row["id"] for row in tracker.search_applications(keyword, database_path=self.database)], [wanted_id])
+        self.assertEqual(tracker.search_applications("' OR 1=1 --", database_path=self.database), [])
+        self.assertEqual(len(tracker.get_applications(self.database)), 2)
+
+    def test_search_menu_displays_matches_and_reports_no_results(self):
+        application_id = tracker.add_application("Acme", "Engineer", "2026-10-06", "Applied", self.database)
+        with patch.object(app, "initialize_database", partial(tracker.initialize_database, self.database)), \
+             patch.object(app, "search_applications", partial(tracker.search_applications, database_path=self.database)), \
+             patch("builtins.input", side_effect=["5", "acme", "applied", "5", "missing", "", "3"]), \
+             redirect_stdout(StringIO()) as output:
+            app.main()
+        self.assertIn(f"ID {application_id}: Acme - Engineer", output.getvalue())
+        self.assertIn("No matching applications found.", output.getvalue())
+
 if __name__ == "__main__":
     unittest.main()
