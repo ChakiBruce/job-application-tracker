@@ -81,3 +81,22 @@ def search_applications(keyword="", status="", database_path=DATABASE_PATH):
             """,
             (keyword, keyword, status, status),
         ).fetchall()
+
+
+def get_application_statistics(database_path=DATABASE_PATH):
+    """Return the total and counts for each saved status."""
+    with closing(sqlite3.connect(database_path)) as connection:
+        rows = connection.execute(
+            """
+            SELECT status, COUNT(*) AS application_count
+            FROM applications
+            GROUP BY status
+            ORDER BY status
+            """
+        ).fetchall()
+
+    status_counts = dict(rows)
+    return {
+        "total": sum(status_counts.values()),
+        "status_counts": status_counts,
+    }

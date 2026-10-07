@@ -124,5 +124,51 @@ class TrackerTests(unittest.TestCase):
         self.assertIn(f"ID {application_id}: Acme - Engineer", output.getvalue())
         self.assertIn("No matching applications found.", output.getvalue())
 
+    def test_statistics_for_empty_database(self):
+        self.assertEqual(
+            tracker.get_application_statistics(self.database),
+            {"total": 0, "status_counts": {}},
+        )
+
+    def test_statistics_count_multiple_statuses_and_custom_status(self):
+        for status in ("Applied", "Applied", "Interviewing", "Offer", "Awaiting referral"):
+            tracker.add_application("Example", "Engineer", "2026-10-07", status, self.database)
+        statistics = tracker.get_application_statistics(self.database)
+        self.assertEqual(statistics["total"], 5)
+        self.assertEqual(statistics["status_counts"], {
+            "Applied": 2, "Interviewing": 1, "Offer": 1, "Awaiting referral": 1,
+        })
+
+    def test_statistics_reflect_status_updates_after_reinitialization(self):
+        application_id = tracker.add_application("Example", "Engineer", "2026-10-07", "Applied", self.database)
+        tracker.add_application("Other", "Engineer", "2026-10-07", "Offer", self.database)
+        tracker.update_application_status(application_id, "Offer", self.database)
+        tracker.initialize_database(self.database)
+        self.assertEqual(
+            tracker.get_application_statistics(self.database),
+            {"total": 2, "status_counts": {"Offer": 2}},
+        )
+
+    def test_statistics_menu_displays_total_and_counts(self):
+        for status in ("Applied", "Applied", "Interviewing"):
+            tracker.add_application("Example", "Engineer", "2026-10-07", status, self.database)
+        with patch.object(app, "initialize_database", partial(tracker.initialize_database, self.database)), \
+             patch.object(app, "get_application_statistics", partial(tracker.get_application_statistics, self.database)), \
+             patch("builtins.input", side_effect=["6", "3"]), \
+             redirect_stdout(StringIO()) as output:
+            app.main()
+        self.assertIn("Total applications: 3", output.getvalue())
+        self.assertIn("Applied: 2", output.getvalue())
+        self.assertIn("Interviewing: 1", output.getvalue())
+
+    def test_statistics_menu_handles_empty_database(self):
+        with patch.object(app, "initialize_database", partial(tracker.initialize_database, self.database)), \
+             patch.object(app, "get_application_statistics", partial(tracker.get_application_statistics, self.database)), \
+             patch("builtins.input", side_effect=["6", "3"]), \
+             redirect_stdout(StringIO()) as output:
+            app.main()
+        self.assertIn("Total applications: 0", output.getvalue())
+        self.assertIn("No applications yet.", output.getvalue())
+
 if __name__ == "__main__":
     unittest.main()

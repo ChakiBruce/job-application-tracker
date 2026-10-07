@@ -2,7 +2,14 @@
 
 from datetime import date
 
-from src.tracker import add_application, get_applications, initialize_database, search_applications, update_application_status
+from src.tracker import (
+    add_application,
+    get_application_statistics,
+    get_applications,
+    initialize_database,
+    search_applications,
+    update_application_status,
+)
 
 
 def read_required(prompt):
@@ -91,6 +98,18 @@ def search_applications_flow():
         return
     display_applications(applications)
 
+def view_statistics():
+    """Display the total applications and counts by status."""
+    statistics = get_application_statistics()
+    print(f"\nTotal applications: {statistics['total']}")
+    if statistics["total"] == 0:
+        print("No applications yet. Choose 1 to add one.")
+        return
+
+    print("Applications by status:")
+    for status, count in statistics["status_counts"].items():
+        print(f"  {status}: {count}")
+
 def main():
     initialize_database()
 
@@ -98,7 +117,7 @@ def main():
 
 
     while True:
-        print("\n1. Add application\n2. View applications\n3. Exit\n4. Update application status\n5. Search/filter applications")
+        print("\n1. Add application\n2. View applications\n3. Exit\n4. Update application status\n5. Search/filter applications\n6. View statistics")
         choice = input("Choose an option: ").strip()
         if choice == "1":
             add_application_flow()
@@ -111,8 +130,10 @@ def main():
             update_status_flow()
         elif choice == "5":
             search_applications_flow()
+        elif choice == "6":
+            view_statistics()
         else:
-            print("Please choose 1, 2, 3, 4, or 5.")
+            print("Please choose 1, 2, 3, 4, 5, or 6.")
 
 
 if __name__ == "__main__":
