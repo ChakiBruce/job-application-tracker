@@ -1,0 +1,30 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #243449; background: #f4f7fa; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+header { background: white; border-bottom: 1px solid #dce3ec; padding: 1.3rem max(1.25rem, calc((100% - 1080px) / 2)); display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+a { color: #185da4; }
+.brand { font-weight: 700; text-decoration: none; color: #243449; }
+nav { display: flex; gap: 1.5rem; }
+main { max-width: 1080px; margin: 3rem auto; padding: 0 1.25rem; }
+h1 { margin: 0 0 .5rem; font-size: 2rem; }
+p { line-height: 1.6; }
+.page-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+.card, .table-container { background: white; border: 1px solid #dce3ec; border-radius: 12px; }
+.card { padding: 1.75rem; }
+.table-container { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; text-align: left; }
+th, td { padding: 1rem; border-bottom: 1px solid #e6ebf2; overflow-wrap: anywhere; }
+th { background: #edf3fa; }
+tbody tr:last-child td { border-bottom: none; }
+.status { display: inline-block; background: #edf3fa; border-radius: 6px; padding: .25rem .6rem; }
+.button, button { background: #185da4; color: white; padding: .8rem 1.1rem; border: 0; border-radius: 7px; font: inherit; cursor: pointer; text-decoration: none; }
+.form { max-width: 620px; }
+label { display: block; font-weight: 600; margin-bottom: .4rem; }
+input:not([type=hidden]) { width: 100%; font: inherit; padding: .75rem; border: 1px solid #a9b8c9; border-radius: 6px; margin-bottom: 1.25rem; }
+.actions { display: flex; align-items: center; gap: 1.5rem; margin-top: .5rem; }
+.errors { color: #862525; background: #fff0ef; padding: 1rem; margin-bottom: 1.5rem; border-radius: 6px; }
+:focus-visible { outline: 3px solid #bd7500; outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+.notice { background: #e8f5ed; color: #225c38; padding: 1rem; border-radius: 7px; }
+.errorlist { color: #862525; margin-top: -.75rem; margin-bottom: 1.25rem; }

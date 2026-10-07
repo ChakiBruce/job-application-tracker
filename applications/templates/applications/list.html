@@ -1,0 +1,22 @@
+{% extends "applications/base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div><h1>Your applications</h1><p>{{ applications|length }} saved application{{ applications|length|pluralize }}</p></div>
+  <a class="button" href="{% url 'applications:create' %}">Add application</a>
+</div>
+{% if applications %}
+<div class="table-container">
+  <table>
+    <caption class="sr-only">Saved job applications</caption>
+    <thead><tr><th scope="col">ID</th><th scope="col">Company</th><th scope="col">Role</th><th scope="col">Applied</th><th scope="col">Status</th></tr></thead>
+    <tbody>
+      {% for application in applications %}
+      <tr><td>{{ application.id }}</td><td>{{ application.company }}</td><td>{{ application.role }}</td><td>{{ application.application_date|date:"Y-m-d" }}</td><td><span class="status">{{ application.status }}</span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<section class="card"><h2>Start your application list</h2><p>Add your first application to keep its details in one place.</p></section>
+{% endif %}
+{% endblock %}
