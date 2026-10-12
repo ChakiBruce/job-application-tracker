@@ -20,7 +20,7 @@ tbody tr:last-child td { border-bottom: none; }
 .button, button { background: #185da4; color: white; padding: .8rem 1.1rem; border: 0; border-radius: 7px; font: inherit; cursor: pointer; text-decoration: none; }
 .form { max-width: 620px; }
 label { display: block; font-weight: 600; margin-bottom: .4rem; }
-input:not([type=hidden]) { width: 100%; font: inherit; padding: .75rem; border: 1px solid #a9b8c9; border-radius: 6px; margin-bottom: 1.25rem; }
+input:not([type=hidden]), select { width: 100%; font: inherit; padding: .75rem; border: 1px solid #a9b8c9; border-radius: 6px; margin-bottom: 1.25rem; }
 .actions { display: flex; align-items: center; gap: 1.5rem; margin-top: .5rem; }
 .errors { color: #862525; background: #fff0ef; padding: 1rem; margin-bottom: 1.5rem; border-radius: 6px; }
 :focus-visible { outline: 3px solid #bd7500; outline-offset: 3px; }

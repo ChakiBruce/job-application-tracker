@@ -1,0 +1,16 @@
+{% extends "applications/base.html" %}
+{% block title %}Update status · Job Application Tracker{% endblock %}
+{% block content %}
+<h1>Update status</h1>
+<p>{{ application.company }} · {{ application.role }}</p>
+<p>Current status: {{ application.status }}</p>
+<form class="card form" method="post" action="{% url 'applications:update_status' application.pk %}">
+  {% csrf_token %}
+  {% if form.errors %}<div class="errors" role="alert">Please check the status below. {{ form.non_field_errors }}</div>{% endif %}
+  {{ form.status.label_tag }}
+  {{ form.status }}
+  {{ form.status.errors }}
+
+  <div class="actions"><button type="submit">Save status</button><a href="{% url 'applications:list' %}">Cancel</a></div>
+</form>
+{% endblock %}

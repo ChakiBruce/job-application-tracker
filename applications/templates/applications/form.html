@@ -11,7 +11,7 @@
     {{ field }}
     {{ field.errors }}
   {% endfor %}
-  <datalist id="status-options"><option value="Applied"><option value="Interviewing"><option value="Offer"><option value="Rejected"></datalist>
+
   <div class="actions"><button type="submit">Save application</button><a href="{% url 'applications:list' %}">Cancel</a></div>
 </form>
 {% endblock %}
