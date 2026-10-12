@@ -4,7 +4,7 @@ A Python and SQLite tracker with terminal and Django browser interfaces.
 
 ## Features
 
-- Browser: view and add applications, and update statuses with validated forms.
+- Browser: view and add applications, update statuses, and sort by date, company, role, or status.
 - Terminal: add, view, update status, search/filter, and view statistics.
 - Both interfaces share `data/applications.db`.
 
@@ -38,7 +38,9 @@ changes should use normal Django migrations.
 
 Open http://127.0.0.1:8000/ to view your applications or add one through a form.
 Select **Update status** beside an application to edit its status. Saving returns
- to the list with a confirmation message.
+to the list with a confirmation message.
+Use **Sort by** and **Apply sort** to reorder applications. The default is newest
+application date first; company, role, and status offer alphabetical sorting in both directions.
 
 Stop the local development server with Ctrl+C. Search and
 statistics currently remain available in the terminal interface.

@@ -28,3 +28,7 @@ input:not([type=hidden]), select { width: 100%; font: inherit; padding: .75rem; 
 
 .notice { background: #e8f5ed; color: #225c38; padding: 1rem; border-radius: 7px; }
 .errorlist { color: #862525; margin-top: -.75rem; margin-bottom: 1.25rem; }
+.sort-controls { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.sort-controls label { margin: 0; }
+.sort-controls select { width: auto; max-width: 100%; min-width: 230px; margin: 0; background: white; }
+@media (max-width: 480px) { .sort-controls select { width: 100%; min-width: 0; } }

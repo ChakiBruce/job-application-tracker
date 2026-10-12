@@ -159,3 +159,57 @@ class ApplicationStatusTests(TestCase):
                 self.assertRedirects(self.client.post(self.url, {"status": status}), reverse("applications:list"))
                 self.application.refresh_from_db()
                 self.assertEqual(self.application.status, status)
+
+
+class ApplicationSortingTests(TestCase):
+    def setUp(self):
+        self.zeta = Application.objects.create(
+            company="Zeta", role="Zulu", application_date="2026-10-01", status="Offer",
+        )
+        self.alpha = Application.objects.create(
+            company="Alpha", role="Beta", application_date="2026-10-12", status="Applied",
+        )
+        self.lower_alpha = Application.objects.create(
+            company="alpha", role="alpha", application_date="2026-10-12", status="Interviewing",
+        )
+        self.url = reverse("applications:list")
+
+    def test_default_is_newest_first_with_stable_date_ties(self):
+        response = self.client.get(self.url)
+        self.assertEqual(list(response.context["applications"]), [self.alpha, self.lower_alpha, self.zeta])
+        self.assertEqual(response.context["selected_sort"], "date_desc")
+
+    def test_each_sort_option_orders_applications(self):
+        a, b, c = self.zeta, self.alpha, self.lower_alpha
+        expected_orders = {
+            "date_desc": [b, c, a], "date_asc": [a, b, c],
+            "company_asc": [b, c, a], "company_desc": [a, b, c],
+            "role_asc": [c, b, a], "role_desc": [a, b, c],
+            "status_asc": [b, c, a], "status_desc": [a, c, b],
+        }
+        for sort, expected in expected_orders.items():
+            with self.subTest(sort=sort):
+                response = self.client.get(self.url, {"sort": sort})
+                self.assertEqual(list(response.context["applications"]), expected)
+                self.assertEqual(response.context["selected_sort"], sort)
+
+    def test_unknown_sort_falls_back_to_newest(self):
+        for sort in ("", "missing", "company; DROP TABLE applications", "company__unknown"):
+            with self.subTest(sort=sort):
+                response = self.client.get(self.url, {"sort": sort})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.context["selected_sort"], "date_desc")
+                self.assertEqual(list(response.context["applications"]), [self.alpha, self.lower_alpha, self.zeta])
+
+    def test_selected_sort_is_rendered_and_ids_are_hidden(self):
+        response = self.client.get(self.url, {"sort": "company_asc"})
+        self.assertContains(response, '<option value="company_asc" selected>Company: A–Z</option>', html=True)
+        self.assertNotContains(response, '<th scope="col">ID</th>', html=True)
+        self.assertNotContains(response, f"<td>{self.zeta.pk}</td>", html=True)
+        self.assertContains(response, f'href="{reverse("applications:update_status", args=[self.zeta.pk])}"')
+
+    def test_sorting_handles_empty_table(self):
+        Application.objects.all().delete()
+        response = self.client.get(self.url, {"sort": "role_desc"})
+        self.assertContains(response, "Start your application list")
+        self.assertEqual(list(response.context["applications"]), [])

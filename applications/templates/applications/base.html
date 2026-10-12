@@ -10,10 +10,6 @@
 <body>
   <header>
     <a class="brand" href="{% url 'applications:list' %}">Job Application Tracker</a>
-    <nav aria-label="Main navigation">
-      <a href="{% url 'applications:list' %}">Applications</a>
-      <a href="{% url 'applications:create' %}">Add application</a>
-    </nav>
   </header>
   <main>
     {% for message in messages %}<p class="notice" role="status">{{ message }}</p>{% endfor %}
