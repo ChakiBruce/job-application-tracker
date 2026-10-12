@@ -30,7 +30,7 @@ class ApplicationWebTests(TestCase):
         self.assertEqual(str(applied), "2026-10-07")
 
     def test_invalid_form_does_not_save_and_preserves_values(self):
-        for changes in ({"company": "   "}, {"role": ""}, {"status": ""}, {"application_date": "2026-02-30"}):
+        for changes in ({"company": "   "}, {"role": ""}, {"status": ""}, {"status": "Unknown"}, {"application_date": "2026-02-30"}):
             with self.subTest(changes=changes):
                 response = self.client.post(reverse("applications:create"), self.form_data(**changes))
                 self.assertContains(response, "Please check the fields below.")
@@ -62,3 +62,100 @@ class ApplicationWebTests(TestCase):
 
     def test_list_rejects_post(self):
         self.assertEqual(self.client.post(reverse("applications:list")).status_code, 405)
+
+
+    def test_add_status_dropdown_defaults_to_applied(self):
+        response = self.client.get(reverse("applications:create"))
+        self.assertContains(response, '<select name="status"')
+        self.assertContains(response, '<option value="Applied" selected>Applied</option>', html=True)
+        for status in ("Interviewing", "Offer", "Rejected"):
+            self.assertContains(response, f'<option value="{status}">{status}</option>', html=True)
+        self.assertNotContains(response, "<datalist")
+
+    def test_add_accepts_each_selectable_status(self):
+        for status in ("Applied", "Interviewing", "Offer", "Rejected"):
+            with self.subTest(status=status):
+                response = self.client.post(reverse("applications:create"), self.form_data(status=status))
+                self.assertRedirects(response, reverse("applications:list"))
+                self.assertEqual(Application.objects.latest("pk").status, status)
+        self.assertEqual(Application.objects.count(), 4)
+
+class ApplicationStatusTests(TestCase):
+    def setUp(self):
+        self.application = Application.objects.create(
+            company="Example", role="Engineer", application_date="2026-10-12", status="Applied",
+        )
+        self.other = Application.objects.create(
+            company="Other", role="Developer", application_date="2026-10-11", status="Offer",
+        )
+        self.url = reverse("applications:update_status", args=[self.application.pk])
+
+    def test_list_links_to_selected_application_and_get_prefills_status(self):
+        self.assertContains(self.client.get(reverse("applications:list")), f'href="{self.url}"')
+        response = self.client.get(self.url)
+        self.assertEqual(response.context["form"]["status"].value(), "Applied")
+        self.assertContains(response, "Example")
+        self.assertContains(response, "csrfmiddlewaretoken")
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, "Applied")
+
+    def test_update_persists_and_leaves_other_fields_and_records_unchanged(self):
+        fields = ["company", "role", "application_date"]
+        before = Application.objects.values(*fields).get(pk=self.application.pk)
+        response = self.client.post(self.url, {
+            "status": "Interviewing", "company": "Unwanted change", "role": "Changed",
+        }, follow=True)
+        self.assertRedirects(response, reverse("applications:list"))
+        self.assertContains(response, "Application status updated.")
+        self.application.refresh_from_db()
+        self.other.refresh_from_db()
+        self.assertEqual(self.application.status, "Interviewing")
+        self.assertEqual(self.other.status, "Offer")
+        self.assertEqual(Application.objects.values(*fields).get(pk=self.application.pk), before)
+        self.assertEqual(Application.objects.count(), 2)
+        self.assertContains(Client().get(reverse("applications:list")), "Interviewing")
+
+    def test_invalid_status_keeps_saved_status(self):
+        for status in ("", "   ", "Unknown", "x" * 101):
+            with self.subTest(status=status):
+                response = self.client.post(self.url, {"status": status})
+                self.assertContains(response, "Please check the status below.")
+                self.assertTrue(response.context["form"].errors)
+                self.application.refresh_from_db()
+                self.assertEqual(self.application.status, "Applied")
+
+    def test_missing_application_returns_404(self):
+        url = reverse("applications:update_status", args=[self.other.pk + 1])
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertEqual(self.client.post(url, {"status": "Rejected"}).status_code, 404)
+
+    def test_update_requires_csrf_token(self):
+        client = Client(enforce_csrf_checks=True)
+        self.assertEqual(client.post(self.url, {"status": "Rejected"}).status_code, 403)
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, "Applied")
+        client.get(self.url)
+        response = client.post(self.url, {
+            "status": "Rejected", "csrfmiddlewaretoken": client.cookies["csrftoken"].value,
+        })
+        self.assertEqual(response.status_code, 302)
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.status, "Rejected")
+
+    def test_unsupported_method_is_rejected(self):
+        self.assertEqual(self.client.delete(self.url).status_code, 405)
+
+    def test_status_is_a_dropdown_with_current_value_selected(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, '<select name="status"')
+        self.assertContains(response, '<option value="Applied" selected>Applied</option>', html=True)
+        for status in ("Interviewing", "Offer", "Rejected"):
+            self.assertContains(response, f'<option value="{status}">{status}</option>', html=True)
+        self.assertNotContains(response, "<datalist")
+
+    def test_all_dropdown_statuses_can_be_saved(self):
+        for status in ("Applied", "Interviewing", "Offer", "Rejected"):
+            with self.subTest(status=status):
+                self.assertRedirects(self.client.post(self.url, {"status": status}), reverse("applications:list"))
+                self.application.refresh_from_db()
+                self.assertEqual(self.application.status, status)
