@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.db.models.functions import Lower
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_safe
@@ -7,10 +8,28 @@ from .forms import ApplicationForm, ApplicationStatusForm
 from .models import Application
 
 
+SORT_OPTIONS = {
+    "date_desc": ("Applied: newest first", ("-application_date", "pk")),
+    "date_asc": ("Applied: oldest first", ("application_date", "pk")),
+    "company_asc": ("Company: A–Z", (Lower("company").asc(), "pk")),
+    "company_desc": ("Company: Z–A", (Lower("company").desc(), "pk")),
+    "role_asc": ("Role: A–Z", (Lower("role").asc(), "pk")),
+    "role_desc": ("Role: Z–A", (Lower("role").desc(), "pk")),
+    "status_asc": ("Status: A–Z", (Lower("status").asc(), "pk")),
+    "status_desc": ("Status: Z–A", (Lower("status").desc(), "pk")),
+}
+
+
 @require_safe
 def application_list(request):
+    selected_sort = request.GET.get("sort", "date_desc")
+    if selected_sort not in SORT_OPTIONS:
+        selected_sort = "date_desc"
+    ordering = SORT_OPTIONS[selected_sort][1]
     return render(request, "applications/list.html", {
-        "applications": Application.objects.all(),
+        "applications": Application.objects.order_by(*ordering),
+        "selected_sort": selected_sort,
+        "sort_options": [(value, option[0]) for value, option in SORT_OPTIONS.items()],
     })
 
 
